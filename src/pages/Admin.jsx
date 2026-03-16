@@ -5,7 +5,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import {
   getOrders, updateOrderStatus, getTodaySales, getWeekSales,
-  getEditedOrders, getCancelledOrders, resetAllData
+  getEditedOrders, getCancelledOrders, resetAllData, cancelOrder
 } from '../utils/orders'
 import { api } from '../utils/api'
 import {
@@ -90,6 +90,7 @@ const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = fals
                     <option value="Preparing">Preparing</option>
                     <option value="Ready">Ready</option>
                     <option value="Completed">Completed</option>
+                    <option value="Cancelled" className="text-red-600 font-semibold">Cancel Order</option>
                   </select>
                 </td>
               )}
@@ -269,6 +270,15 @@ const Admin = () => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
+      if (newStatus === 'Cancelled') {
+        const reason = window.prompt("Please provide a reason for cancelling this order:")
+        if (reason !== null) {
+          await cancelOrder(orderId, reason || 'Cancelled by Admin')
+          await loadData()
+        }
+        return
+      }
+
       await updateOrderStatus(orderId, newStatus)
       await loadData()
     } catch (error) {

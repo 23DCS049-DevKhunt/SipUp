@@ -6,11 +6,11 @@ const router = express.Router()
 
 // Order Rate Limiting Middleware (5 orders per 15 minutes per IP)
 const orderLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 30 * 60 * 1000, // 30 minutes
   max: 5, // Limit each IP to 5 requests per windowMs
   message: { error: 'Too many orders placed from this IP address. Please try again after 15 minutes.' },
-  standardHeaders: true, 
-  legacyHeaders: false, 
+  standardHeaders: true,
+  legacyHeaders: false,
 })
 
 // Get order counter
