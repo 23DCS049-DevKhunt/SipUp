@@ -5,7 +5,7 @@ import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import {
   getOrders, updateOrderStatus, getTodaySales, getWeekSales,
-  getEditedOrders, getCancelledOrders, resetAllData, cancelOrder
+  getEditedOrders, getCancelledOrders, resetAllData, cancelOrder, deleteOrder
 } from '../utils/orders'
 import { api } from '../utils/api'
 import {
@@ -24,7 +24,7 @@ const TABS = [
 ]
 
 // Order Table Component
-const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = false, showEditHistory = false, showCancelReason = false, onStatusChange }) => (
+const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = false, showEditHistory = false, showCancelReason = false, showDelete = false, onStatusChange, onDeleteOrder }) => (
   <div className="overflow-x-auto">
     {tableOrders.length === 0 ? (
       <p className="text-text/60 text-center py-8">No orders found</p>
@@ -41,6 +41,7 @@ const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = fals
             <th className="text-left p-3 text-text font-semibold text-sm">Time</th>
             {showStatus && <th className="text-left p-3 text-text font-semibold text-sm">Status</th>}
             {showActions && <th className="text-left p-3 text-text font-semibold text-sm">Actions</th>}
+            {showDelete && !showActions && <th className="text-left p-3 text-text font-semibold text-sm">Delete</th>}
             {showEditHistory && <th className="text-left p-3 text-text font-semibold text-sm">Edit Info</th>}
             {showCancelReason && <th className="text-left p-3 text-text font-semibold text-sm">Cancel Info</th>}
           </tr>
@@ -81,17 +82,39 @@ const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = fals
               )}
               {showActions && (
                 <td className="p-3">
-                  <select
-                    value={order.status}
-                    onChange={(e) => onStatusChange && onStatusChange(order._id, e.target.value)}
-                    className="p-2 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none text-text text-sm"
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={order.status}
+                      onChange={(e) => onStatusChange && onStatusChange(order._id, e.target.value)}
+                      className="p-2 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none text-text text-sm"
+                    >
+                      <option value="New">New</option>
+                      <option value="Preparing">Preparing</option>
+                      <option value="Ready">Ready</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled" className="text-red-600 font-semibold">Cancel Order</option>
+                    </select>
+                    {showDelete && (
+                      <button
+                        onClick={() => onDeleteOrder && onDeleteOrder(order._id)}
+                        className="p-2 bg-red-100 text-red-700 rounded-custom hover:bg-red-200 transition-colors"
+                        title="Delete Order"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              )}
+              {showDelete && !showActions && (
+                <td className="p-3">
+                  <button
+                    onClick={() => onDeleteOrder && onDeleteOrder(order._id)}
+                    className="p-2 bg-red-100 text-red-700 rounded-custom hover:bg-red-200 transition-colors"
+                    title="Delete Order"
                   >
-                    <option value="New">New</option>
-                    <option value="Preparing">Preparing</option>
-                    <option value="Ready">Ready</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled" className="text-red-600 font-semibold">Cancel Order</option>
-                  </select>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </td>
               )}
               {showEditHistory && (
@@ -277,13 +300,24 @@ const Admin = () => {
           await loadData()
         }
         return
+      } else {
+        await updateOrderStatus(orderId, newStatus)
+        await loadData()
       }
-
-      await updateOrderStatus(orderId, newStatus)
-      await loadData()
     } catch (error) {
       console.error('Error updating order status:', error)
       alert('Failed to update order status')
+    }
+  }
+
+  const handleDeleteOrder = async (orderId) => {
+    if (window.confirm('Are you strictly sure you want to permanently delete this order? This action cannot be undone and will affect revenue metrics.')) {
+      try {
+        await deleteOrder(orderId)
+        await loadData()
+      } catch (error) {
+        alert('Failed to delete order')
+      }
     }
   }
 
@@ -702,41 +736,76 @@ const Admin = () => {
           {/* Active Orders Tab */}
           {activeTab === 'active' && (
             <motion.div
-              className="bg-white rounded-custom p-6 shadow-soft"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-custom p-6 shadow-soft"
             >
-              <OrderTable orders={activeOrders} showActions={true} showStatus={true} onStatusChange={handleStatusChange} />
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <ClipboardList className="text-primary" /> Active Orders
+                </h2>
+                <span className="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full text-sm">
+                  {activeOrders.length} Orders
+                </span>
+              </div>
+              <OrderTable
+                orders={activeOrders}
+                showActions={true}
+                showStatus={true}
+                showDelete={true}
+                onStatusChange={handleStatusChange}
+                onDeleteOrder={handleDeleteOrder}
+              />
             </motion.div>
           )}
 
           {/* Edited Orders Tab */}
           {activeTab === 'edited' && (
             <motion.div
-              className="bg-white rounded-custom p-6 shadow-soft"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-custom p-6 shadow-soft"
             >
-              <div className="mb-4 p-3 bg-purple-50 rounded-custom text-sm text-purple-700 flex items-center gap-2">
-                <Edit3 className="w-4 h-4" />
-                These orders have been modified by customers. Review the changes and update status as needed.
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-purple-600">
+                  <Edit3 className="text-purple-600" /> Edited Orders
+                </h2>
+                <span className="bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-full text-sm">
+                  {editedOrders.length} Orders
+                </span>
               </div>
-              <OrderTable orders={editedOrders} showActions={true} showEditHistory={true} onStatusChange={handleStatusChange} />
+              <OrderTable
+                orders={editedOrders}
+                showEditHistory={true}
+                showActions={true}
+                showDelete={true}
+                onStatusChange={handleStatusChange}
+                onDeleteOrder={handleDeleteOrder}
+              />
             </motion.div>
           )}
 
           {/* Cancelled Orders Tab */}
           {activeTab === 'cancelled' && (
             <motion.div
-              className="bg-white rounded-custom p-6 shadow-soft"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-custom p-6 shadow-soft"
             >
-              <div className="mb-4 p-3 bg-red-50 rounded-custom text-sm text-red-700 flex items-center gap-2">
-                <XCircle className="w-4 h-4" />
-                These orders have been cancelled by customers.
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-red-600">
+                  <XCircle className="text-red-600" /> Cancelled Orders
+                </h2>
+                <span className="bg-red-100 text-red-700 font-bold px-3 py-1 rounded-full text-sm">
+                  {cancelledOrders.length} Orders
+                </span>
               </div>
-              <OrderTable orders={cancelledOrders} showCancelReason={true} />
+              <OrderTable
+                orders={cancelledOrders}
+                showCancelReason={true}
+                showDelete={true}
+                onDeleteOrder={handleDeleteOrder}
+              />
             </motion.div>
           )}
 
@@ -868,7 +937,7 @@ const Admin = () => {
                   <Download className="w-4 h-4" /> Export PDF
                 </button>
               </div>
-              <OrderTable orders={orders} showStatus={true} />
+              <OrderTable orders={orders} showStatus={true} showDelete={true} onDeleteOrder={handleDeleteOrder} />
             </motion.div>
           )}
         </div>

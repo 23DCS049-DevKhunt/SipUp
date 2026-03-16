@@ -101,3 +101,12 @@ export const resetAllData = async () => {
     throw error
   }
 }
+
+export const deleteOrder = async (orderId) => {
+  try {
+    return await api.deleteOrder(orderId)
+  } catch (error) {
+    console.error('Error deleting order:', error)
+    throw error
+  }
+}

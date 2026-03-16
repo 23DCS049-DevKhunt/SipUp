@@ -47,6 +47,13 @@ export const api = {
     return handleResponse(response)
   },
 
+  deleteOrder: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
+      method: 'DELETE',
+    })
+    return handleResponse(response)
+  },
+
   getOrdersByPhone: async (phone) => {
     const response = await fetch(`${API_BASE_URL}/orders/phone/${encodeURIComponent(phone)}`)
     return handleResponse(response)
