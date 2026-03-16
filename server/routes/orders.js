@@ -35,6 +35,45 @@ router.delete('/reset', async (req, res) => {
   }
 })
 
+// Telegram Notification
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8460106493:AAH8ekMuZpZVhm_F-5fVSsIPMeOEHQnOwJc'
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '5555919083'
+
+const sendTelegramNotification = async (order) => {
+  try {
+    const itemsList = order.items
+      .map(item => `  • ${item.quantity}x ${item.customName || item.name}`)
+      .join('\n')
+
+    const message = [
+      '🧃 *New Order Received!*',
+      '',
+      `📦 *Order ID:* ${order.orderId}`,
+      `👤 *Customer:* ${order.customerName}`,
+      `📱 *Phone:* ${order.phone}`,
+      `🏠 *Address:* ${order.address || 'Not provided'}`,
+      '',
+      '🛒 *Items:*',
+      itemsList,
+      '',
+      `💰 *Total:* ₹${order.total}`,
+      `🕐 *Time:* ${new Date(order.timestamp).toLocaleString('en-IN')}`,
+    ].join('\n')
+
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    })
+  } catch (err) {
+    console.error('Telegram notification failed:', err.message)
+  }
+}
+
 // Create a new order
 router.post('/', async (req, res) => {
   try {
@@ -52,6 +91,10 @@ router.post('/', async (req, res) => {
     })
 
     const savedOrder = await order.save()
+
+    // Send Telegram notification (non-blocking)
+    sendTelegramNotification(savedOrder)
+
     res.status(201).json(savedOrder)
   } catch (error) {
     res.status(400).json({ error: error.message })
