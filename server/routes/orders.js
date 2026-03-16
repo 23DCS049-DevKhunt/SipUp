@@ -1,7 +1,17 @@
 import express from 'express'
+import rateLimit from 'express-rate-limit'
 import Order from '../models/Order.js'
 
 const router = express.Router()
+
+// Order Rate Limiting Middleware (5 orders per 15 minutes per IP)
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: { error: 'Too many orders placed from this IP address. Please try again after 15 minutes.' },
+  standardHeaders: true, 
+  legacyHeaders: false, 
+})
 
 // Get order counter
 let orderCounter = 0
@@ -35,8 +45,8 @@ router.delete('/reset', async (req, res) => {
   }
 })
 
-// Create a new order
-router.post('/', async (req, res) => {
+// Create a new order (Apply Rate Limiting Here)
+router.post('/', orderLimiter, async (req, res) => {
   try {
     const { customerName, phone, address, items, total, paymentMode } = req.body
 
