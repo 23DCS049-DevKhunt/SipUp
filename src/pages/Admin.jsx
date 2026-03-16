@@ -1,0 +1,770 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  getOrders, updateOrderStatus, getTodaySales, getWeekSales,
+  getEditedOrders, getCancelledOrders
+} from '../utils/orders'
+import { api } from '../utils/api'
+import {
+  LayoutDashboard, ClipboardList, Edit3, XCircle, UtensilsCrossed,
+  History, LogOut, ChevronRight, Plus, Trash2, ToggleLeft, ToggleRight,
+  Search, Package, Eye, EyeOff
+} from 'lucide-react'
+
+const TABS = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'active', label: 'Active Orders', icon: ClipboardList },
+  { id: 'edited', label: 'Edited Orders', icon: Edit3 },
+  { id: 'cancelled', label: 'Cancelled Orders', icon: XCircle },
+  { id: 'menu', label: 'Menu Management', icon: UtensilsCrossed },
+  { id: 'history', label: 'Order History', icon: History },
+]
+
+const Admin = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [orders, setOrders] = useState([])
+  const [activeOrders, setActiveOrders] = useState([])
+  const [completedOrders, setCompletedOrders] = useState([])
+  const [editedOrders, setEditedOrders] = useState([])
+  const [cancelledOrders, setCancelledOrders] = useState([])
+  const [todaySales, setTodaySales] = useState(0)
+  const [weekSales, setWeekSales] = useState(0)
+  const [menuItems, setMenuItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const navigate = useNavigate()
+
+  // Menu management state
+  const [showAddItem, setShowAddItem] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
+  const [newItem, setNewItem] = useState({ name: '', basePrice: '', category: 'juice', baseFruit: '', allowCustomization: false })
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadData()
+      const interval = setInterval(loadData, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [allOrders, today, week, edited, cancelled, menu] = await Promise.all([
+        getOrders(),
+        getTodaySales(),
+        getWeekSales(),
+        getEditedOrders(),
+        getCancelledOrders(),
+        api.getMenuItems()
+      ])
+      setOrders(allOrders)
+      setActiveOrders(allOrders.filter(order =>
+        ['New', 'Preparing', 'Ready'].includes(order.status)
+      ))
+      setCompletedOrders(allOrders.filter(order => order.status === 'Completed'))
+      setEditedOrders(edited)
+      setCancelledOrders(cancelled)
+      setTodaySales(today)
+      setWeekSales(week)
+      setMenuItems(menu)
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogin = (e) => {
+    e.preventDefault()
+    if (username === 'admin' && password === 'sipup123') {
+      setIsAuthenticated(true)
+    } else {
+      alert('Invalid credentials')
+    }
+  }
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await updateOrderStatus(orderId, newStatus)
+      await loadData()
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      alert('Failed to update order status')
+    }
+  }
+
+  // Menu Management Handlers
+  const handleAddMenuItem = async (e) => {
+    e.preventDefault()
+    try {
+      await api.addMenuItem({
+        ...newItem,
+        basePrice: Number(newItem.basePrice)
+      })
+      setNewItem({ name: '', basePrice: '', category: 'juice', baseFruit: '', allowCustomization: false })
+      setShowAddItem(false)
+      await loadData()
+    } catch (error) {
+      alert('Failed to add item: ' + error.message)
+    }
+  }
+
+  const handleUpdateMenuItem = async (e) => {
+    e.preventDefault()
+    try {
+      await api.updateMenuItem(editingItem.id, {
+        name: editingItem.name,
+        basePrice: Number(editingItem.basePrice),
+        category: editingItem.category,
+        baseFruit: editingItem.baseFruit,
+        allowCustomization: editingItem.allowCustomization
+      })
+      setEditingItem(null)
+      await loadData()
+    } catch (error) {
+      alert('Failed to update item: ' + error.message)
+    }
+  }
+
+  const handleDeleteMenuItem = async (id) => {
+    if (!confirm('Are you sure you want to delete this menu item?')) return
+    try {
+      await api.deleteMenuItem(id)
+      await loadData()
+    } catch (error) {
+      alert('Failed to delete item: ' + error.message)
+    }
+  }
+
+  const handleToggleAvailability = async (id) => {
+    try {
+      await api.toggleMenuAvailability(id)
+      await loadData()
+    } catch (error) {
+      alert('Failed to toggle availability: ' + error.message)
+    }
+  }
+
+  // Login Screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <motion.div
+          className="bg-white rounded-custom p-8 shadow-soft w-full max-w-md"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold mb-6 text-center font-heading text-text">Admin Login</h1>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+              required
+            />
+            <button
+              type="submit"
+              className="w-full bg-primary text-white py-3 rounded-custom font-semibold hover:bg-primary/90 transition-colors shadow-soft"
+            >
+              Login
+            </button>
+          </form>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full mt-4 text-text/60 hover:text-text transition-colors"
+          >
+            ← Back to Home
+          </button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // Order Table Component
+  const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = false, showEditHistory = false, showCancelReason = false }) => (
+    <div className="overflow-x-auto">
+      {tableOrders.length === 0 ? (
+        <p className="text-text/60 text-center py-8">No orders found</p>
+      ) : (
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-gray-50">
+              <th className="text-left p-3 text-text font-semibold text-sm">Order ID</th>
+              <th className="text-left p-3 text-text font-semibold text-sm">Customer</th>
+              <th className="text-left p-3 text-text font-semibold text-sm">Phone</th>
+              <th className="text-left p-3 text-text font-semibold text-sm">Address</th>
+              <th className="text-left p-3 text-text font-semibold text-sm">Items</th>
+              <th className="text-left p-3 text-text font-semibold text-sm">Total</th>
+              <th className="text-left p-3 text-text font-semibold text-sm">Time</th>
+              {showStatus && <th className="text-left p-3 text-text font-semibold text-sm">Status</th>}
+              {showActions && <th className="text-left p-3 text-text font-semibold text-sm">Actions</th>}
+              {showEditHistory && <th className="text-left p-3 text-text font-semibold text-sm">Edit Info</th>}
+              {showCancelReason && <th className="text-left p-3 text-text font-semibold text-sm">Cancel Info</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {tableOrders.map((order) => (
+              <tr key={order._id} className="border-b hover:bg-gray-50 transition-colors">
+                <td className="p-3 font-semibold text-text text-sm">{order.orderId || order._id}</td>
+                <td className="p-3 text-text text-sm">{order.customerName}</td>
+                <td className="p-3 text-text text-sm">{order.phone}</td>
+                <td className="p-3 text-text text-sm max-w-[150px] truncate">{order.address || '-'}</td>
+                <td className="p-3 text-text">
+                  {order.items.map((item, idx) => (
+                    <div key={idx} className="text-sm">
+                      {item.quantity}x {item.customName || item.name}
+                    </div>
+                  ))}
+                </td>
+                <td className="p-3 font-semibold text-primary text-sm">₹{order.total}</td>
+                <td className="p-3 text-text text-sm whitespace-nowrap">
+                  {new Date(order.timestamp).toLocaleString('en-IN', {
+                    day: '2-digit', month: 'short',
+                    hour: '2-digit', minute: '2-digit'
+                  })}
+                </td>
+                {showStatus && (
+                  <td className="p-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      order.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
+                      order.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                      order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
+                      order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </td>
+                )}
+                {showActions && (
+                  <td className="p-3">
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                      className="p-2 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none text-text text-sm"
+                    >
+                      <option value="New">New</option>
+                      <option value="Preparing">Preparing</option>
+                      <option value="Ready">Ready</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </td>
+                )}
+                {showEditHistory && (
+                  <td className="p-3 text-sm">
+                    {order.editHistory && order.editHistory.length > 0 ? (
+                      <div className="space-y-1">
+                        {order.editHistory.map((edit, idx) => (
+                          <div key={idx} className="bg-purple-50 p-2 rounded text-xs">
+                            <p className="text-purple-700 font-medium">
+                              {new Date(edit.editedAt).toLocaleString('en-IN')}
+                            </p>
+                            <p className="text-text/60">Prev: ₹{edit.previousTotal}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : '-'}
+                  </td>
+                )}
+                {showCancelReason && (
+                  <td className="p-3 text-sm">
+                    <p className="text-red-600">{order.cancelReason || '-'}</p>
+                    {order.cancelledAt && (
+                      <p className="text-xs text-text/50 mt-1">
+                        {new Date(order.cancelledAt).toLocaleString('en-IN')}
+                      </p>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+
+  // Menu Item Form
+  const MenuItemForm = ({ item, onSubmit, onCancel, title }) => (
+    <motion.form
+      onSubmit={onSubmit}
+      className="bg-gray-50 rounded-custom p-6 mb-6"
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+    >
+      <h3 className="text-lg font-bold mb-4 text-text">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input
+          type="text"
+          placeholder="Item Name"
+          value={item.name}
+          onChange={(e) => {
+            if (editingItem) setEditingItem({ ...editingItem, name: e.target.value })
+            else setNewItem({ ...newItem, name: e.target.value })
+          }}
+          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+          required
+        />
+        <input
+          type="number"
+          placeholder="Price (₹)"
+          value={item.basePrice}
+          onChange={(e) => {
+            if (editingItem) setEditingItem({ ...editingItem, basePrice: e.target.value })
+            else setNewItem({ ...newItem, basePrice: e.target.value })
+          }}
+          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+          required
+          min="1"
+        />
+        <select
+          value={item.category}
+          onChange={(e) => {
+            if (editingItem) setEditingItem({ ...editingItem, category: e.target.value })
+            else setNewItem({ ...newItem, category: e.target.value })
+          }}
+          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+        >
+          <option value="juice">Juice</option>
+          <option value="shake">Shake</option>
+          <option value="plate">Plate</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Base Fruit (optional)"
+          value={item.baseFruit || ''}
+          onChange={(e) => {
+            if (editingItem) setEditingItem({ ...editingItem, baseFruit: e.target.value })
+            else setNewItem({ ...newItem, baseFruit: e.target.value })
+          }}
+          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+        />
+      </div>
+      <div className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          id="allowCustomization"
+          checked={item.allowCustomization || false}
+          onChange={(e) => {
+            if (editingItem) setEditingItem({ ...editingItem, allowCustomization: e.target.checked })
+            else setNewItem({ ...newItem, allowCustomization: e.target.checked })
+          }}
+          className="w-4 h-4"
+        />
+        <label htmlFor="allowCustomization" className="text-text text-sm">Allow Customization</label>
+      </div>
+      <div className="flex gap-3 mt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-2 border-2 border-gray-300 rounded-custom font-semibold hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-6 py-2 bg-primary text-white rounded-custom font-semibold hover:bg-primary/90 transition-colors"
+        >
+          {editingItem ? 'Update Item' : 'Add Item'}
+        </button>
+      </div>
+    </motion.form>
+  )
+
+  const currentTab = TABS.find(t => t.id === activeTab)
+
+  // Calculate Total Revenue and Most Ordered Item from completed orders
+  const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0)
+
+  const itemCounts = {}
+  completedOrders.forEach(order => {
+    order.items.forEach(item => {
+      const name = item.customName || item.name
+      itemCounts[name] = (itemCounts[name] || 0) + item.quantity
+    })
+  })
+  
+  let mostOrdered = { name: '-', count: 0 }
+  for (const [name, count] of Object.entries(itemCounts)) {
+    if (count > mostOrdered.count) {
+      mostOrdered = { name, count }
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar */}
+      <motion.aside
+        className={`bg-white shadow-lg flex flex-col ${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 fixed h-full z-20`}
+        initial={false}
+      >
+        <div className="p-4 border-b flex items-center justify-between">
+          {sidebarOpen && <h2 className="text-xl font-bold font-heading text-text">SipUp Admin</h2>}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ChevronRight className={`w-5 h-5 text-text transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        <nav className="flex-1 p-2 space-y-1">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            const badgeCount = tab.id === 'edited' ? editedOrders.length :
+                              tab.id === 'cancelled' ? cancelledOrders.length :
+                              tab.id === 'active' ? activeOrders.length : 0
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-custom transition-all text-left ${
+                  isActive
+                    ? 'bg-primary text-white shadow-soft'
+                    : 'text-text/70 hover:bg-gray-100 hover:text-text'
+                }`}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {sidebarOpen && (
+                  <span className="font-medium text-sm flex-1">{tab.label}</span>
+                )}
+                {sidebarOpen && badgeCount > 0 && (
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'
+                  }`}>
+                    {badgeCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="p-2 border-t space-y-1">
+          <button
+            onClick={() => navigate('/')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-custom text-text/70 hover:bg-gray-100 hover:text-text transition-all text-left"
+          >
+            <Eye className="w-5 h-5 flex-shrink-0" />
+            {sidebarOpen && <span className="font-medium text-sm">View Site</span>}
+          </button>
+          <button
+            onClick={() => setIsAuthenticated(false)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-custom text-red-500 hover:bg-red-50 transition-all text-left"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {sidebarOpen && <span className="font-medium text-sm">Logout</span>}
+          </button>
+        </div>
+      </motion.aside>
+
+      {/* Main Content */}
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
+        <div className="p-6 md:p-8 max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold font-heading text-text">{currentTab?.label}</h1>
+            <p className="text-text/60 mt-1 text-sm">
+              {activeTab === 'dashboard' && 'Overview of your sales and orders'}
+              {activeTab === 'active' && 'Orders currently being processed'}
+              {activeTab === 'edited' && 'Orders modified by customers'}
+              {activeTab === 'cancelled' && 'Orders cancelled by customers'}
+              {activeTab === 'menu' && 'Manage your menu items and availability'}
+              {activeTab === 'history' && 'Complete history of all orders'}
+            </p>
+          </div>
+
+          {/* Dashboard Tab */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-8">
+              {/* Sales Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <motion.div
+                  className="bg-white rounded-custom p-6 shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <h3 className="text-sm font-semibold text-text/60 mb-1">Total Revenue</h3>
+                  <p className="text-3xl font-bold text-primary">₹{totalRevenue}</p>
+                </motion.div>
+                <motion.div
+                  className="bg-white rounded-custom p-6 shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <h3 className="text-sm font-semibold text-text/60 mb-1">Today's Sales</h3>
+                  <p className="text-3xl font-bold text-primary">₹{todaySales}</p>
+                </motion.div>
+                <motion.div
+                  className="bg-white rounded-custom p-6 shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <h3 className="text-sm font-semibold text-text/60 mb-1">Week's Sales</h3>
+                  <p className="text-3xl font-bold text-primary">₹{weekSales}</p>
+                </motion.div>
+                <motion.div
+                  className="bg-white rounded-custom p-6 shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h3 className="text-sm font-semibold text-text/60 mb-1">Most Ordered</h3>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xl font-bold text-text truncate max-w-[150px]" title={mostOrdered.name}>{mostOrdered.name}</p>
+                    {mostOrdered.count > 0 && <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-full">{mostOrdered.count}x</span>}
+                  </div>
+                </motion.div>
+                <motion.div
+                  className="bg-white rounded-custom p-6 shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <h3 className="text-sm font-semibold text-text/60 mb-1">Active Orders</h3>
+                  <p className="text-3xl font-bold text-blue-600">{activeOrders.length}</p>
+                </motion.div>
+                <motion.div
+                  className="bg-white rounded-custom p-6 shadow-soft"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <h3 className="text-sm font-semibold text-text/60 mb-1">Total Orders</h3>
+                  <p className="text-3xl font-bold text-text">{orders.length}</p>
+                </motion.div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-custom p-6 shadow-soft">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Package className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-text">Completed</h4>
+                      <p className="text-2xl font-bold text-green-600">{completedOrders.length}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-custom p-6 shadow-soft">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Edit3 className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-text">Edited</h4>
+                      <p className="text-2xl font-bold text-purple-600">{editedOrders.length}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-custom p-6 shadow-soft">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-text">Cancelled</h4>
+                      <p className="text-2xl font-bold text-red-600">{cancelledOrders.length}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Active Orders Tab */}
+          {activeTab === 'active' && (
+            <motion.div
+              className="bg-white rounded-custom p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <OrderTable orders={activeOrders} showActions={true} showStatus={true} />
+            </motion.div>
+          )}
+
+          {/* Edited Orders Tab */}
+          {activeTab === 'edited' && (
+            <motion.div
+              className="bg-white rounded-custom p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="mb-4 p-3 bg-purple-50 rounded-custom text-sm text-purple-700 flex items-center gap-2">
+                <Edit3 className="w-4 h-4" />
+                These orders have been modified by customers. Review the changes and update status as needed.
+              </div>
+              <OrderTable orders={editedOrders} showActions={true} showEditHistory={true} />
+            </motion.div>
+          )}
+
+          {/* Cancelled Orders Tab */}
+          {activeTab === 'cancelled' && (
+            <motion.div
+              className="bg-white rounded-custom p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="mb-4 p-3 bg-red-50 rounded-custom text-sm text-red-700 flex items-center gap-2">
+                <XCircle className="w-4 h-4" />
+                These orders have been cancelled by customers.
+              </div>
+              <OrderTable orders={cancelledOrders} showCancelReason={true} />
+            </motion.div>
+          )}
+
+          {/* Menu Management Tab */}
+          {activeTab === 'menu' && (
+            <motion.div
+              className="bg-white rounded-custom p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              {/* Add New Item Button */}
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-sm text-text/60">{menuItems.length} items total</p>
+                <button
+                  onClick={() => setShowAddItem(!showAddItem)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-custom font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Add New Item
+                </button>
+              </div>
+
+              {/* Add Item Form */}
+              <AnimatePresence>
+                {showAddItem && (
+                  <MenuItemForm
+                    item={newItem}
+                    onSubmit={handleAddMenuItem}
+                    onCancel={() => setShowAddItem(false)}
+                    title="Add New Menu Item"
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Edit Item Form */}
+              <AnimatePresence>
+                {editingItem && (
+                  <MenuItemForm
+                    item={editingItem}
+                    onSubmit={handleUpdateMenuItem}
+                    onCancel={() => setEditingItem(null)}
+                    title={`Edit: ${editingItem.name}`}
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Menu Items Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-gray-50">
+                      <th className="text-left p-3 text-text font-semibold text-sm">ID</th>
+                      <th className="text-left p-3 text-text font-semibold text-sm">Name</th>
+                      <th className="text-left p-3 text-text font-semibold text-sm">Price</th>
+                      <th className="text-left p-3 text-text font-semibold text-sm">Category</th>
+                      <th className="text-left p-3 text-text font-semibold text-sm">Available</th>
+                      <th className="text-left p-3 text-text font-semibold text-sm">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {menuItems.map((item) => (
+                      <tr key={item.id} className={`border-b hover:bg-gray-50 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}>
+                        <td className="p-3 text-text text-sm font-mono">{item.id}</td>
+                        <td className="p-3 text-text text-sm font-medium">{item.name}</td>
+                        <td className="p-3 text-primary font-semibold text-sm">₹{item.basePrice}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            item.category === 'juice' ? 'bg-orange-100 text-orange-700' :
+                            item.category === 'shake' ? 'bg-pink-100 text-pink-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => handleToggleAvailability(item.id)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-custom text-sm font-medium transition-colors ${
+                              item.isAvailable !== false
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
+                          >
+                            {item.isAvailable !== false ? (
+                              <><ToggleRight className="w-4 h-4" /> Available</>
+                            ) : (
+                              <><ToggleLeft className="w-4 h-4" /> Unavailable</>
+                            )}
+                          </button>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditingItem({ ...item })}
+                              className="p-2 bg-blue-100 text-blue-700 rounded-custom hover:bg-blue-200 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMenuItem(item.id)}
+                              className="p-2 bg-red-100 text-red-700 rounded-custom hover:bg-red-200 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Order History Tab */}
+          {activeTab === 'history' && (
+            <motion.div
+              className="bg-white rounded-custom p-6 shadow-soft"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-text/60">{orders.length} total orders</p>
+              </div>
+              <OrderTable orders={orders} showStatus={true} />
+            </motion.div>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default Admin
