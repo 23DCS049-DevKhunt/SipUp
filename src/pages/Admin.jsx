@@ -69,11 +69,11 @@ const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = fals
               {showStatus && (
                 <td className="p-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'New' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
-                        order.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                          order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
-                            order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
-                              'bg-red-100 text-red-700'
+                    order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
+                      order.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                        order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
+                          order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
+                            'bg-red-100 text-red-700'
                     }`}>
                     {order.status}
                   </span>
@@ -310,7 +310,7 @@ const Admin = () => {
     }
 
     const doc = new jsPDF()
-    
+
     // Add Header
     doc.setFontSize(20)
     doc.setTextColor(238, 90, 36) // primary color
@@ -327,7 +327,7 @@ const Admin = () => {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
       })
-      
+
       const orderData = [
         order.orderId || order._id.substring(0, 8),
         order.customerName,
@@ -515,8 +515,8 @@ const Admin = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-custom transition-all text-left ${isActive
-                    ? 'bg-primary text-white shadow-soft'
-                    : 'text-text/70 hover:bg-gray-100 hover:text-text'
+                  ? 'bg-primary text-white shadow-soft'
+                  : 'text-text/70 hover:bg-gray-100 hover:text-text'
                   }`}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
@@ -566,13 +566,13 @@ const Admin = () => {
             <div>
               <h1 className="text-3xl font-bold font-heading text-text">{currentTab?.label}</h1>
               <p className="text-text/60 mt-1 text-sm">
-              {activeTab === 'dashboard' && 'Overview of your sales and orders'}
-              {activeTab === 'active' && 'Orders currently being processed'}
-              {activeTab === 'edited' && 'Orders modified by customers'}
-              {activeTab === 'cancelled' && 'Orders cancelled by customers'}
-              {activeTab === 'menu' && 'Manage your menu items and availability'}
-              {activeTab === 'history' && 'Complete history of all orders'}
-            </p>
+                {activeTab === 'dashboard' && 'Overview of your sales and orders'}
+                {activeTab === 'active' && 'Orders currently being processed'}
+                {activeTab === 'edited' && 'Orders modified by customers'}
+                {activeTab === 'cancelled' && 'Orders cancelled by customers'}
+                {activeTab === 'menu' && 'Manage your menu items and availability'}
+                {activeTab === 'history' && 'Complete history of all orders'}
+              </p>
             </div>
           </div>
 
@@ -805,8 +805,8 @@ const Admin = () => {
                         <td className="p-3 text-primary font-semibold text-sm">₹{item.basePrice}</td>
                         <td className="p-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.category === 'juice' ? 'bg-orange-100 text-orange-700' :
-                              item.category === 'shake' ? 'bg-pink-100 text-pink-700' :
-                                'bg-green-100 text-green-700'
+                            item.category === 'shake' ? 'bg-pink-100 text-pink-700' :
+                              'bg-green-100 text-green-700'
                             }`}>
                             {item.category}
                           </span>
@@ -815,8 +815,8 @@ const Admin = () => {
                           <button
                             onClick={() => handleToggleAvailability(item.id)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-custom text-sm font-medium transition-colors ${item.isAvailable !== false
-                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-red-100 text-red-700 hover:bg-red-200'
                               }`}
                           >
                             {item.isAvailable !== false ? (
