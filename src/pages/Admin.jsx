@@ -21,6 +21,184 @@ const TABS = [
   { id: 'history', label: 'Order History', icon: History },
 ]
 
+// Order Table Component
+const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = false, showEditHistory = false, showCancelReason = false, onStatusChange }) => (
+  <div className="overflow-x-auto">
+    {tableOrders.length === 0 ? (
+      <p className="text-text/60 text-center py-8">No orders found</p>
+    ) : (
+      <table className="w-full">
+        <thead>
+          <tr className="border-b bg-gray-50">
+            <th className="text-left p-3 text-text font-semibold text-sm">Order ID</th>
+            <th className="text-left p-3 text-text font-semibold text-sm">Customer</th>
+            <th className="text-left p-3 text-text font-semibold text-sm">Phone</th>
+            <th className="text-left p-3 text-text font-semibold text-sm">Address</th>
+            <th className="text-left p-3 text-text font-semibold text-sm">Items</th>
+            <th className="text-left p-3 text-text font-semibold text-sm">Total</th>
+            <th className="text-left p-3 text-text font-semibold text-sm">Time</th>
+            {showStatus && <th className="text-left p-3 text-text font-semibold text-sm">Status</th>}
+            {showActions && <th className="text-left p-3 text-text font-semibold text-sm">Actions</th>}
+            {showEditHistory && <th className="text-left p-3 text-text font-semibold text-sm">Edit Info</th>}
+            {showCancelReason && <th className="text-left p-3 text-text font-semibold text-sm">Cancel Info</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {tableOrders.map((order) => (
+            <tr key={order._id} className="border-b hover:bg-gray-50 transition-colors">
+              <td className="p-3 font-semibold text-text text-sm">{order.orderId || order._id}</td>
+              <td className="p-3 text-text text-sm">{order.customerName}</td>
+              <td className="p-3 text-text text-sm">{order.phone}</td>
+              <td className="p-3 text-text text-sm max-w-[150px] truncate">{order.address || '-'}</td>
+              <td className="p-3 text-text">
+                {order.items.map((item, idx) => (
+                  <div key={idx} className="text-sm">
+                    {item.quantity}x {item.customName || item.name}
+                  </div>
+                ))}
+              </td>
+              <td className="p-3 font-semibold text-primary text-sm">₹{order.total}</td>
+              <td className="p-3 text-text text-sm whitespace-nowrap">
+                {new Date(order.timestamp).toLocaleString('en-IN', {
+                  day: '2-digit', month: 'short',
+                  hour: '2-digit', minute: '2-digit'
+                })}
+              </td>
+              {showStatus && (
+                <td className="p-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                    order.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                    order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
+                    order.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                    order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
+                    order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {order.status}
+                  </span>
+                </td>
+              )}
+              {showActions && (
+                <td className="p-3">
+                  <select
+                    value={order.status}
+                    onChange={(e) => onStatusChange && onStatusChange(order._id, e.target.value)}
+                    className="p-2 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none text-text text-sm"
+                  >
+                    <option value="New">New</option>
+                    <option value="Preparing">Preparing</option>
+                    <option value="Ready">Ready</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </td>
+              )}
+              {showEditHistory && (
+                <td className="p-3 text-sm">
+                  {order.editHistory && order.editHistory.length > 0 ? (
+                    <div className="space-y-1">
+                      {order.editHistory.map((edit, idx) => (
+                        <div key={idx} className="bg-purple-50 p-2 rounded text-xs">
+                          <p className="text-purple-700 font-medium">
+                            {new Date(edit.editedAt).toLocaleString('en-IN')}
+                          </p>
+                          <p className="text-text/60">Prev: ₹{edit.previousTotal}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : '-'}
+                </td>
+              )}
+              {showCancelReason && (
+                <td className="p-3 text-sm">
+                  <p className="text-red-600">{order.cancelReason || '-'}</p>
+                  {order.cancelledAt && (
+                    <p className="text-xs text-text/50 mt-1">
+                      {new Date(order.cancelledAt).toLocaleString('en-IN')}
+                    </p>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </div>
+)
+
+// Menu Item Form
+const MenuItemForm = ({ item, onSubmit, onCancel, title, setItemState }) => (
+  <motion.form
+    onSubmit={onSubmit}
+    className="bg-gray-50 rounded-custom p-6 mb-6"
+    initial={{ opacity: 0, height: 0 }}
+    animate={{ opacity: 1, height: 'auto' }}
+    exit={{ opacity: 0, height: 0 }}
+  >
+    <h3 className="text-lg font-bold mb-4 text-text">{title}</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input
+        type="text"
+        placeholder="Item Name"
+        value={item.name}
+        onChange={(e) => setItemState({ ...item, name: e.target.value })}
+        className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+        required
+      />
+      <input
+        type="number"
+        placeholder="Price (₹)"
+        value={item.basePrice}
+        onChange={(e) => setItemState({ ...item, basePrice: e.target.value })}
+        className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+        required
+        min="1"
+      />
+      <select
+        value={item.category}
+        onChange={(e) => setItemState({ ...item, category: e.target.value })}
+        className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+      >
+        <option value="juice">Juice</option>
+        <option value="shake">Shake</option>
+        <option value="plate">Plate</option>
+      </select>
+      <input
+        type="text"
+        placeholder="Base Fruit (optional)"
+        value={item.baseFruit || ''}
+        onChange={(e) => setItemState({ ...item, baseFruit: e.target.value })}
+        className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+      />
+    </div>
+    <div className="flex items-center gap-2 mt-4">
+      <input
+        type="checkbox"
+        id="allowCustomization"
+        checked={item.allowCustomization || false}
+        onChange={(e) => setItemState({ ...item, allowCustomization: e.target.checked })}
+        className="w-4 h-4"
+      />
+      <label htmlFor="allowCustomization" className="text-text text-sm">Allow Customization</label>
+    </div>
+    <div className="flex gap-3 mt-4">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="px-6 py-2 border-2 border-gray-300 rounded-custom font-semibold hover:bg-gray-50 transition-colors"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="px-6 py-2 bg-primary text-white rounded-custom font-semibold hover:bg-primary/90 transition-colors"
+      >
+        {title.includes('Edit') ? 'Update Item' : 'Add Item'}
+      </button>
+    </div>
+  </motion.form>
+)
+
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [username, setUsername] = useState('')
@@ -195,198 +373,7 @@ const Admin = () => {
     )
   }
 
-  // Order Table Component
-  const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = false, showEditHistory = false, showCancelReason = false }) => (
-    <div className="overflow-x-auto">
-      {tableOrders.length === 0 ? (
-        <p className="text-text/60 text-center py-8">No orders found</p>
-      ) : (
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="text-left p-3 text-text font-semibold text-sm">Order ID</th>
-              <th className="text-left p-3 text-text font-semibold text-sm">Customer</th>
-              <th className="text-left p-3 text-text font-semibold text-sm">Phone</th>
-              <th className="text-left p-3 text-text font-semibold text-sm">Address</th>
-              <th className="text-left p-3 text-text font-semibold text-sm">Items</th>
-              <th className="text-left p-3 text-text font-semibold text-sm">Total</th>
-              <th className="text-left p-3 text-text font-semibold text-sm">Time</th>
-              {showStatus && <th className="text-left p-3 text-text font-semibold text-sm">Status</th>}
-              {showActions && <th className="text-left p-3 text-text font-semibold text-sm">Actions</th>}
-              {showEditHistory && <th className="text-left p-3 text-text font-semibold text-sm">Edit Info</th>}
-              {showCancelReason && <th className="text-left p-3 text-text font-semibold text-sm">Cancel Info</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {tableOrders.map((order) => (
-              <tr key={order._id} className="border-b hover:bg-gray-50 transition-colors">
-                <td className="p-3 font-semibold text-text text-sm">{order.orderId || order._id}</td>
-                <td className="p-3 text-text text-sm">{order.customerName}</td>
-                <td className="p-3 text-text text-sm">{order.phone}</td>
-                <td className="p-3 text-text text-sm max-w-[150px] truncate">{order.address || '-'}</td>
-                <td className="p-3 text-text">
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="text-sm">
-                      {item.quantity}x {item.customName || item.name}
-                    </div>
-                  ))}
-                </td>
-                <td className="p-3 font-semibold text-primary text-sm">₹{order.total}</td>
-                <td className="p-3 text-text text-sm whitespace-nowrap">
-                  {new Date(order.timestamp).toLocaleString('en-IN', {
-                    day: '2-digit', month: 'short',
-                    hour: '2-digit', minute: '2-digit'
-                  })}
-                </td>
-                {showStatus && (
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      order.status === 'New' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
-                      order.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                      order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
-                      order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </td>
-                )}
-                {showActions && (
-                  <td className="p-3">
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                      className="p-2 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none text-text text-sm"
-                    >
-                      <option value="New">New</option>
-                      <option value="Preparing">Preparing</option>
-                      <option value="Ready">Ready</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </td>
-                )}
-                {showEditHistory && (
-                  <td className="p-3 text-sm">
-                    {order.editHistory && order.editHistory.length > 0 ? (
-                      <div className="space-y-1">
-                        {order.editHistory.map((edit, idx) => (
-                          <div key={idx} className="bg-purple-50 p-2 rounded text-xs">
-                            <p className="text-purple-700 font-medium">
-                              {new Date(edit.editedAt).toLocaleString('en-IN')}
-                            </p>
-                            <p className="text-text/60">Prev: ₹{edit.previousTotal}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : '-'}
-                  </td>
-                )}
-                {showCancelReason && (
-                  <td className="p-3 text-sm">
-                    <p className="text-red-600">{order.cancelReason || '-'}</p>
-                    {order.cancelledAt && (
-                      <p className="text-xs text-text/50 mt-1">
-                        {new Date(order.cancelledAt).toLocaleString('en-IN')}
-                      </p>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  )
 
-  // Menu Item Form
-  const MenuItemForm = ({ item, onSubmit, onCancel, title }) => (
-    <motion.form
-      onSubmit={onSubmit}
-      className="bg-gray-50 rounded-custom p-6 mb-6"
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-    >
-      <h3 className="text-lg font-bold mb-4 text-text">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input
-          type="text"
-          placeholder="Item Name"
-          value={item.name}
-          onChange={(e) => {
-            if (editingItem) setEditingItem({ ...editingItem, name: e.target.value })
-            else setNewItem({ ...newItem, name: e.target.value })
-          }}
-          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
-          required
-        />
-        <input
-          type="number"
-          placeholder="Price (₹)"
-          value={item.basePrice}
-          onChange={(e) => {
-            if (editingItem) setEditingItem({ ...editingItem, basePrice: e.target.value })
-            else setNewItem({ ...newItem, basePrice: e.target.value })
-          }}
-          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
-          required
-          min="1"
-        />
-        <select
-          value={item.category}
-          onChange={(e) => {
-            if (editingItem) setEditingItem({ ...editingItem, category: e.target.value })
-            else setNewItem({ ...newItem, category: e.target.value })
-          }}
-          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
-        >
-          <option value="juice">Juice</option>
-          <option value="shake">Shake</option>
-          <option value="plate">Plate</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Base Fruit (optional)"
-          value={item.baseFruit || ''}
-          onChange={(e) => {
-            if (editingItem) setEditingItem({ ...editingItem, baseFruit: e.target.value })
-            else setNewItem({ ...newItem, baseFruit: e.target.value })
-          }}
-          className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
-        />
-      </div>
-      <div className="flex items-center gap-2 mt-4">
-        <input
-          type="checkbox"
-          id="allowCustomization"
-          checked={item.allowCustomization || false}
-          onChange={(e) => {
-            if (editingItem) setEditingItem({ ...editingItem, allowCustomization: e.target.checked })
-            else setNewItem({ ...newItem, allowCustomization: e.target.checked })
-          }}
-          className="w-4 h-4"
-        />
-        <label htmlFor="allowCustomization" className="text-text text-sm">Allow Customization</label>
-      </div>
-      <div className="flex gap-3 mt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-6 py-2 border-2 border-gray-300 rounded-custom font-semibold hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-6 py-2 bg-primary text-white rounded-custom font-semibold hover:bg-primary/90 transition-colors"
-        >
-          {editingItem ? 'Update Item' : 'Add Item'}
-        </button>
-      </div>
-    </motion.form>
-  )
 
   const currentTab = TABS.find(t => t.id === activeTab)
 
@@ -602,7 +589,7 @@ const Admin = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <OrderTable orders={activeOrders} showActions={true} showStatus={true} />
+              <OrderTable orders={activeOrders} showActions={true} showStatus={true} onStatusChange={handleStatusChange} />
             </motion.div>
           )}
 
@@ -617,7 +604,7 @@ const Admin = () => {
                 <Edit3 className="w-4 h-4" />
                 These orders have been modified by customers. Review the changes and update status as needed.
               </div>
-              <OrderTable orders={editedOrders} showActions={true} showEditHistory={true} />
+              <OrderTable orders={editedOrders} showActions={true} showEditHistory={true} onStatusChange={handleStatusChange} />
             </motion.div>
           )}
 
@@ -662,6 +649,7 @@ const Admin = () => {
                     onSubmit={handleAddMenuItem}
                     onCancel={() => setShowAddItem(false)}
                     title="Add New Menu Item"
+                    setItemState={setNewItem}
                   />
                 )}
               </AnimatePresence>
@@ -674,6 +662,7 @@ const Admin = () => {
                     onSubmit={handleUpdateMenuItem}
                     onCancel={() => setEditingItem(null)}
                     title={`Edit: ${editingItem.name}`}
+                    setItemState={setEditingItem}
                   />
                 )}
               </AnimatePresence>
