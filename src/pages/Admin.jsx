@@ -66,14 +66,13 @@ const OrderTable = ({ orders: tableOrders, showStatus = true, showActions = fals
               </td>
               {showStatus && (
                 <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    order.status === 'New' ? 'bg-blue-100 text-blue-700' :
-                    order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
-                    order.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                    order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
-                    order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'New' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'Preparing' ? 'bg-yellow-100 text-yellow-700' :
+                        order.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                          order.status === 'Completed' ? 'bg-gray-100 text-gray-700' :
+                            order.status === 'Edited' ? 'bg-purple-100 text-purple-700' :
+                              'bg-red-100 text-red-700'
+                    }`}>
                     {order.status}
                   </span>
                 </td>
@@ -259,7 +258,7 @@ const Admin = () => {
 
   const handleLogin = (e) => {
     e.preventDefault()
-    if (username === 'admin' && password === 'sipup123') {
+    if (username === 'sipupadmin' && password === 'sipup-admin@3510') {
       setIsAuthenticated(true)
     } else {
       alert('Invalid credentials')
@@ -387,7 +386,7 @@ const Admin = () => {
       itemCounts[name] = (itemCounts[name] || 0) + item.quantity
     })
   })
-  
+
   let mostOrdered = { name: '-', count: 0 }
   for (const [name, count] of Object.entries(itemCounts)) {
     if (count > mostOrdered.count) {
@@ -417,27 +416,25 @@ const Admin = () => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
             const badgeCount = tab.id === 'edited' ? editedOrders.length :
-                              tab.id === 'cancelled' ? cancelledOrders.length :
-                              tab.id === 'active' ? activeOrders.length : 0
+              tab.id === 'cancelled' ? cancelledOrders.length :
+                tab.id === 'active' ? activeOrders.length : 0
 
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-custom transition-all text-left ${
-                  isActive
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-custom transition-all text-left ${isActive
                     ? 'bg-primary text-white shadow-soft'
                     : 'text-text/70 hover:bg-gray-100 hover:text-text'
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 {sidebarOpen && (
                   <span className="font-medium text-sm flex-1">{tab.label}</span>
                 )}
                 {sidebarOpen && badgeCount > 0 && (
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'
-                  }`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'
+                    }`}>
                     {badgeCount}
                   </span>
                 )}
@@ -687,22 +684,20 @@ const Admin = () => {
                         <td className="p-3 text-text text-sm font-medium">{item.name}</td>
                         <td className="p-3 text-primary font-semibold text-sm">₹{item.basePrice}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            item.category === 'juice' ? 'bg-orange-100 text-orange-700' :
-                            item.category === 'shake' ? 'bg-pink-100 text-pink-700' :
-                            'bg-green-100 text-green-700'
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.category === 'juice' ? 'bg-orange-100 text-orange-700' :
+                              item.category === 'shake' ? 'bg-pink-100 text-pink-700' :
+                                'bg-green-100 text-green-700'
+                            }`}>
                             {item.category}
                           </span>
                         </td>
                         <td className="p-3">
                           <button
                             onClick={() => handleToggleAvailability(item.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-custom text-sm font-medium transition-colors ${
-                              item.isAvailable !== false
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-custom text-sm font-medium transition-colors ${item.isAvailable !== false
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200'
                                 : 'bg-red-100 text-red-700 hover:bg-red-200'
-                            }`}
+                              }`}
                           >
                             {item.isAvailable !== false ? (
                               <><ToggleRight className="w-4 h-4" /> Available</>
