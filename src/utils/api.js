@@ -3,8 +3,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 // Helper function to handle API errors
 const handleResponse = async (response) => {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }))
-    throw new Error(error.error || 'API request failed')
+    const errorBody = await response.json().catch(() => ({ error: 'Network error' }))
+    const err = new Error(errorBody.error || 'API request failed')
+    err.status = response.status
+    throw err
   }
   return response.json()
 }

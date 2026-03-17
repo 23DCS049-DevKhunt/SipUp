@@ -1,6 +1,7 @@
 import express from 'express'
 import Order from '../models/Order.js'
 import Settings from '../models/Settings.js'
+import { rateLimiter } from '../utils/ratelimit.js'
 
 const router = express.Router()
 
@@ -78,6 +79,23 @@ const sendTelegramNotification = async (order) => {
 // Create a new order
 router.post('/', async (req, res) => {
   try {
+    // Apply IP-based rate limiting if ratelimiter is configured
+    if (rateLimiter) {
+      // Get real IP from standard deployment headers or fallback to local
+      const ip = req.headers["x-real-ip"] || req.headers["x-forwarded-for"]?.split(",")[0].trim() || "127.0.0.1"
+      
+      const { success, reset } = await rateLimiter.limit(ip)
+      
+      if (!success) {
+        const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000)
+        const retryAfterMinutes = Math.ceil(retryAfterSeconds / 60)
+        return res.status(429).json({
+          error: `You have placed the maximum of 3 orders allowed per hour from your location. Please try again in ${retryAfterMinutes} minute(s).`,
+          retryAfter: retryAfterSeconds
+        })
+      }
+    }
+
     // Check if ordering is enabled
     let settings = await Settings.findOne({ id: 'global_settings' })
     if (settings && !settings.isOrderingEnabled) {

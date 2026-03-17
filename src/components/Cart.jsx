@@ -86,7 +86,11 @@ const Cart = () => {
       setIsCartOpen(false)
       setFormData({ name: '', phone: '', address: '', paymentMode: 'cash' })
     } catch (error) {
-      alert('Failed to place order. Please try again.')
+      if (error.status === 429) {
+        alert(error.message || 'You have placed the maximum orders allowed per hour.')
+      } else {
+        alert(error.message || 'Failed to place order. Please try again.')
+      }
       console.error('Order error:', error)
     } finally {
       setIsSubmitting(false)
