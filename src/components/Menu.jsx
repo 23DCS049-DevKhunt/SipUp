@@ -21,14 +21,8 @@ const Menu = () => {
           api.getJuicesAndShakes(),
           api.getFruitPlates()
         ])
-        // Sort: available items first, unavailable at the end
-        const sortAvailableFirst = (items) => [...items].sort((a, b) => {
-          if (a.isAvailable === false && b.isAvailable !== false) return 1
-          if (a.isAvailable !== false && b.isAvailable === false) return -1
-          return 0
-        })
-        setJuicesAndShakes(sortAvailableFirst(juices))
-        setFruitPlates(sortAvailableFirst(plates))
+        setJuicesAndShakes(juices)
+        setFruitPlates(plates)
       } catch (error) {
         console.error('Error loading menu:', error)
       } finally {
