@@ -3,6 +3,7 @@ import { X, ShoppingCart } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useState, useEffect, useRef } from 'react'
 import { saveOrder } from '../utils/orders'
+import { api } from '../utils/api'
 import confetti from 'canvas-confetti'
 
 const Cart = () => {
@@ -10,8 +11,26 @@ const Cart = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [formData, setFormData] = useState({ name: '', phone: '', address: '', paymentMode: 'cash' })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isOrderingEnabled, setIsOrderingEnabled] = useState(true)
   const cartControls = useAnimation()
   const prevLen = useRef(cart.length)
+
+  // Fetch settings when cart opens to ensure we have the latest status
+  useEffect(() => {
+    if (isCartOpen) {
+      const fetchSettings = async () => {
+        try {
+          const settings = await api.getSettings()
+          if (settings) {
+            setIsOrderingEnabled(settings.isOrderingEnabled)
+          }
+        } catch (error) {
+          console.error("Failed to fetch order settings:", error)
+        }
+      }
+      fetchSettings()
+    }
+  }, [isCartOpen])
 
   useEffect(() => {
     if (cart.length > prevLen.current) {
@@ -26,6 +45,12 @@ const Cart = () => {
 
   const handleCheckout = async (e) => {
     e.preventDefault()
+
+    if (!isOrderingEnabled) {
+      alert('Order service is currently disabled. We are not accepting new orders at this moment.')
+      return
+    }
+
     if (!formData.name || !formData.phone || formData.phone.length !== 10 || !formData.address.trim()) {
       alert('Please fill all fields correctly. Phone must be 10 digits and address is required.')
       return
@@ -204,12 +229,20 @@ const Cart = () => {
                     <span>Total:</span>
                     <span className="text-primary">₹{getTotal()}</span>
                   </div>
+                  
+                  {!isOrderingEnabled && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-custom text-sm font-semibold text-center">
+                      Order service is temporarily offline. We are not accepting new orders right now.
+                    </div>
+                  )}
+
                   {!isCheckoutOpen ? (
                     <button
                       onClick={() => setIsCheckoutOpen(true)}
-                      className="w-full bg-primary text-white py-3 rounded-custom font-semibold hover:bg-primary/90 transition-colors shadow-soft"
+                      disabled={!isOrderingEnabled}
+                      className={`w-full py-3 rounded-custom font-semibold transition-colors shadow-soft ${isOrderingEnabled ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                     >
-                      Checkout
+                      {isOrderingEnabled ? 'Checkout' : 'Checkout Disabled'}
                     </button>
                   ) : (
                     <motion.form

@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import orderRoutes from './routes/orders.js'
 import menuRoutes from './routes/menu.js'
 import fruitRoutes from './routes/fruits.js'
+import settingsRoutes from './routes/settings.js'
 
 dotenv.config()
 
@@ -31,6 +32,7 @@ mongoose.connect(MONGODB_URI)
 app.use('/api/orders', orderRoutes)
 app.use('/api/menu', menuRoutes)
 app.use('/api/fruits', fruitRoutes)
+app.use('/api/settings', settingsRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -207,4 +207,17 @@ export const api = {
     })
     return handleResponse(response)
   },
+
+  // Settings
+  getSettings: async () => {
+    const response = await fetch(`${API_BASE_URL}/settings`)
+    return handleResponse(response)
+  },
+
+  toggleOrdering: async () => {
+    const response = await fetch(`${API_BASE_URL}/settings/toggle-ordering`, {
+      method: 'PATCH',
+    })
+    return handleResponse(response)
+  }
 }

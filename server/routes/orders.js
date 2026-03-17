@@ -1,5 +1,6 @@
 import express from 'express'
 import Order from '../models/Order.js'
+import Settings from '../models/Settings.js'
 
 const router = express.Router()
 
@@ -77,6 +78,12 @@ const sendTelegramNotification = async (order) => {
 // Create a new order
 router.post('/', async (req, res) => {
   try {
+    // Check if ordering is enabled
+    let settings = await Settings.findOne({ id: 'global_settings' })
+    if (settings && !settings.isOrderingEnabled) {
+      return res.status(403).json({ error: 'Order service is temporarily disabled' })
+    }
+
     const { customerName, phone, address, items, total, paymentMode } = req.body
 
     const order = new Order({

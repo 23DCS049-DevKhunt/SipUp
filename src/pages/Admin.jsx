@@ -238,6 +238,7 @@ const Admin = () => {
   const [weekSales, setWeekSales] = useState(0)
   const [menuItems, setMenuItems] = useState([])
   const [fruits, setFruits] = useState([])
+  const [isOrderingEnabled, setIsOrderingEnabled] = useState(true)
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const navigate = useNavigate()
@@ -262,14 +263,15 @@ const Admin = () => {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [allOrders, today, week, edited, cancelled, menu, fruitsData] = await Promise.all([
+      const [allOrders, today, week, edited, cancelled, menu, fruitsData, settingsData] = await Promise.all([
         getOrders(),
         getTodaySales(),
         getWeekSales(),
         getEditedOrders(),
         getCancelledOrders(),
         api.getMenuItems(),
-        api.getFruits()
+        api.getFruits(),
+        api.getSettings()
       ])
       setOrders(allOrders)
       setActiveOrders(allOrders.filter(order =>
@@ -282,6 +284,7 @@ const Admin = () => {
       setWeekSales(week)
       setMenuItems(menu)
       setFruits(fruitsData)
+      setIsOrderingEnabled(settingsData?.isOrderingEnabled ?? true)
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -484,6 +487,17 @@ const Admin = () => {
     }
   }
 
+  const handleToggleOrdering = async () => {
+    try {
+      if (window.confirm(`Are you sure you want to ${isOrderingEnabled ? 'DISABLE' : 'ENABLE'} ordering? ${isOrderingEnabled ? 'This will prevent any new orders from being placed.' : 'This will allow customers to place orders again.'}`)) {
+        await api.toggleOrdering()
+        await loadData()
+      }
+    } catch (error) {
+      alert('Failed to toggle ordering status: ' + error.message)
+    }
+  }
+
   // Login Screen
   if (!isAuthenticated) {
     return (
@@ -636,23 +650,43 @@ const Admin = () => {
       <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
         <div className="p-6 md:p-8 max-w-7xl mx-auto pt-16 md:pt-8 min-h-screen">
           {/* Header */}
-          <div className="mb-8 flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 bg-white rounded-custom shadow-sm text-text"
-            >
-              <MenuIcon className="w-6 h-6" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold font-heading text-text">{currentTab?.label}</h1>
-              <p className="text-text/60 mt-1 text-sm">
-                {activeTab === 'dashboard' && 'Overview of your sales and orders'}
-                {activeTab === 'active' && 'Orders currently being processed'}
-                {activeTab === 'edited' && 'Orders modified by customers'}
-                {activeTab === 'cancelled' && 'Orders cancelled by customers'}
-                {activeTab === 'menu' && 'Manage your menu items and availability'}
-                {activeTab === 'history' && 'Complete history of all orders'}
-              </p>
+          <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="md:hidden p-2 bg-white rounded-custom shadow-sm text-text"
+              >
+                <MenuIcon className="w-6 h-6" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold font-heading text-text">{currentTab?.label}</h1>
+                <p className="text-text/60 mt-1 text-sm">
+                  {activeTab === 'dashboard' && 'Overview of your sales and orders'}
+                  {activeTab === 'active' && 'Orders currently being processed'}
+                  {activeTab === 'edited' && 'Orders modified by customers'}
+                  {activeTab === 'cancelled' && 'Orders cancelled by customers'}
+                  {activeTab === 'menu' && 'Manage your menu items and availability'}
+                  {activeTab === 'history' && 'Complete history of all orders'}
+                </p>
+              </div>
+            </div>
+
+            {/* Global Ordering Toggle */}
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-custom shadow-sm border-2 ${isOrderingEnabled ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+              <div>
+                <p className={`font-bold text-sm ${isOrderingEnabled ? 'text-green-700' : 'text-red-700'}`}>
+                  {isOrderingEnabled ? 'Order Service Online' : 'Order Service Offline'}
+                </p>
+                <p className="text-xs text-text/60">{isOrderingEnabled ? 'Accepting orders' : 'Orders paused'}</p>
+              </div>
+              <button
+                onClick={handleToggleOrdering}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold shadow-soft transition-colors ${
+                  isOrderingEnabled ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                }`}
+              >
+                {isOrderingEnabled ? 'Disable Ordering' : 'Enable Ordering'}
+              </button>
             </div>
           </div>
 
