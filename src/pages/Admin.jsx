@@ -681,9 +681,8 @@ const Admin = () => {
               </div>
               <button
                 onClick={handleToggleOrdering}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold shadow-soft transition-colors ${
-                  isOrderingEnabled ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
-                }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold shadow-soft transition-colors ${isOrderingEnabled ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                  }`}
               >
                 {isOrderingEnabled ? 'Disable Ordering' : 'Enable Ordering'}
               </button>
@@ -693,6 +692,43 @@ const Admin = () => {
           {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="space-y-8">
+              {/* Girls Hostel Delivery Notice */}
+              {(() => {
+                const getISTTime = () => {
+                  const d = new Date()
+                  const utc = d.getTime() + (d.getTimezoneOffset() * 60000)
+                  return new Date(utc + (3600000 * 5.5))
+                }
+                const istTime = getISTTime()
+                const hours = istTime.getHours()
+                const mins = istTime.getMinutes()
+                const timeInMins = hours * 60 + mins
+                const startMins = 20 * 60 + 30 // 8:30 PM
+                const endMins = 7 * 60 // 7:00 AM
+
+                const isRestricted = timeInMins >= startMins || timeInMins < endMins
+
+                if (!isRestricted) return null
+
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-custom shadow-soft"
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="font-bold text-amber-800">Delivery Notice</h3>
+                        <p className="text-sm text-amber-900 mt-1">
+                          Delivery is not available in the girl's hostel after 8:30 PM.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              })()}
+
               {/* Sales Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <motion.div
@@ -967,11 +1003,10 @@ const Admin = () => {
                         <td className="p-3">
                           <button
                             onClick={() => handleToggleBestseller(item.id)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-custom text-sm font-medium transition-colors ${
-                              item.isBestseller
-                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                : 'bg-gray-100 text-gray-500 hover:bg-amber-50'
-                            }`}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-custom text-sm font-medium transition-colors ${item.isBestseller
+                              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                              : 'bg-gray-100 text-gray-500 hover:bg-amber-50'
+                              }`}
                             title={item.isBestseller ? 'Remove Bestseller' : 'Mark as Bestseller'}
                           >
                             <Star className={`w-4 h-4 ${item.isBestseller ? 'fill-amber-500 text-amber-500' : ''}`} />
