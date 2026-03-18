@@ -948,7 +948,10 @@ const Admin = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {menuItems.map((item) => (
+                    {[
+                      ...menuItems.filter(item => item.isAvailable !== false),
+                      ...menuItems.filter(item => item.isAvailable === false)
+                    ].map((item) => (
                       <tr key={item.id} className={`border-b hover:bg-gray-50 transition-colors ${!item.isAvailable ? 'opacity-50' : ''}`}>
                         <td className="p-3 text-text text-sm font-mono">{item.id}</td>
                         <td className="p-3 text-text text-sm font-medium">{item.name}</td>
@@ -1096,7 +1099,10 @@ const Admin = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {fruits.map((fruit) => (
+                      {[
+                        ...fruits.filter(fruit => fruit.isAvailable !== false),
+                        ...fruits.filter(fruit => fruit.isAvailable === false)
+                      ].map((fruit) => (
                         <tr key={fruit._id} className={`border-b hover:bg-gray-50 transition-colors ${!fruit.isAvailable ? 'opacity-50' : ''}`}>
                           <td className="p-3 text-text text-sm font-medium">
                             <div className="flex items-center gap-2">

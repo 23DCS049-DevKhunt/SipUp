@@ -98,7 +98,10 @@ const Menu = () => {
               transition={{ duration: 0.3 }}
               className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-            {(activeTab === 'juices' ? juicesAndShakes : fruitPlates).map((item) => (
+            {[
+              ...(activeTab === 'juices' ? juicesAndShakes : fruitPlates).filter(item => item.isAvailable !== false),
+              ...(activeTab === 'juices' ? juicesAndShakes : fruitPlates).filter(item => item.isAvailable === false)
+            ].map((item) => (
               <motion.div
                 key={item.id}
                 className={`relative bg-white rounded-custom p-6 shadow-soft transition-all duration-300 ${
