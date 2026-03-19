@@ -71,11 +71,10 @@ const Menu = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded-custom font-semibold transition-all duration-300 ${
-                activeTab === tab
-                  ? 'bg-primary text-white shadow-soft scale-105'
-                  : 'bg-white text-text hover:bg-gray-100'
-              }`}
+              className={`px-6 py-3 rounded-custom font-semibold transition-all duration-300 ${activeTab === tab
+                ? 'bg-primary text-white shadow-soft scale-105'
+                : 'bg-white text-text hover:bg-gray-100'
+                }`}
             >
               {tab === 'juices' ? 'Juices & Shakes' : 'Fruit Plates'}
             </button>
@@ -98,73 +97,75 @@ const Menu = () => {
               transition={{ duration: 0.3 }}
               className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-            {[
-              ...(activeTab === 'juices' ? juicesAndShakes : fruitPlates).filter(item => item.isAvailable !== false),
-              ...(activeTab === 'juices' ? juicesAndShakes : fruitPlates).filter(item => item.isAvailable === false)
-            ].map((item) => (
-              <motion.div
-                key={item.id}
-                className={`relative bg-white rounded-custom p-6 shadow-soft transition-all duration-300 ${
-                  item.isAvailable === false 
-                    ? 'opacity-60 cursor-not-allowed grayscale-[0.5]' 
+              {[
+                ...(activeTab === 'juices' ? juicesAndShakes : fruitPlates).filter(item => item.isAvailable !== false),
+                ...(activeTab === 'juices' ? juicesAndShakes : fruitPlates).filter(item => item.isAvailable === false)
+              ].map((item) => (
+                <motion.div
+                  key={item.id}
+                  className={`relative bg-white rounded-custom p-6 shadow-soft transition-all duration-300 ${item.isAvailable === false
+                    ? 'opacity-60 cursor-not-allowed grayscale-[0.5]'
                     : 'hover:shadow-lg cursor-pointer'
-                }`}
-                whileHover={item.isAvailable !== false ? { scale: 1.05, y: -5 } : {}}
-                whileTap={item.isAvailable !== false ? { scale: 0.95 } : {}}
-                onClick={() => {
-                  if (item.isAvailable !== false) handleItemClick(item)
-                }}
-              >
-                {item.isBestseller && (
-                  <div className="absolute top-0 left-0 right-0 flex justify-center">
-                    <span className="bg-amber-400 text-white text-xs font-bold px-3 py-0.5 rounded-b-lg shadow flex items-center gap-1">
-                      ⭐ Bestseller
-                    </span>
-                  </div>
-                )}
-                <div
-                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
-                  style={{ backgroundColor: `${getFruitColor(item.baseFruit || 'Orange')}20` }}
+                    }`}
+                  whileHover={item.isAvailable !== false ? { scale: 1.05, y: -5 } : {}}
+                  whileTap={item.isAvailable !== false ? { scale: 0.95 } : {}}
+                  onClick={() => {
+                    if (item.isAvailable !== false) handleItemClick(item)
+                  }}
                 >
-                  {item.name === 'Mix Fruit Juice' && '🥤'}
-                  {(item.name === 'Small Customization Platter' || item.name === 'Premium Customization Platter') && '🍽️'}
-                  {item.baseFruit === 'Watermelon' && '🍉'}
-                  {item.baseFruit === 'Orange' && '🍊'}
-                  {item.baseFruit === 'Pineapple' && '🍍'}
-                  {item.baseFruit === 'Strawberry' && '🍓'}
-                  {item.baseFruit === 'Chikoo' && '🥭'}
-                  {item.baseFruit === 'Guava' && '🍈'}
-                  {item.baseFruit === 'Kiwi' && '🥝'}
-                  {item.baseFruit === 'Tender Coconut' && '🥥'}
-                  {!item.baseFruit && !item.name.includes('Customization') && item.name !== 'Mix Fruit Juice' && '🍎'}
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-center text-text font-heading text-balance">
-                  {item.name}
-                </h3>
-                <p className="text-2xl font-bold text-primary text-center">
-                  ₹{item.basePrice}
-                </p>
-                
-                {item.isAvailable === false ? (
-                  <button
-                    disabled
-                    className="w-full mt-4 bg-gray-200 text-gray-500 py-2 rounded-custom font-semibold cursor-not-allowed border-2 border-gray-300"
+                  {item.isBestseller && (
+                    <div className="absolute top-0 left-0 right-0 flex justify-center">
+                      <span className="bg-amber-400 text-white text-xs font-bold px-3 py-0.5 rounded-b-lg shadow flex items-center gap-1">
+                        ⭐ Bestseller
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
+                    style={{ backgroundColor: `${getFruitColor(item.baseFruit || 'Orange')}20` }}
                   >
-                    Unavailable
-                  </button>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleItemClick(item)
-                    }}
-                    className="w-full mt-4 bg-primary text-white py-2 rounded-custom font-semibold hover:bg-primary/90 transition-colors"
-                  >
-                    {item.allowCustomization ? 'Customize & Add' : 'Add to Cart'}
-                  </button>
-                )}
-              </motion.div>
-            ))}
+                    {item.name === 'Mix Fruit Juice' && '🥤'}
+                    {(item.name === 'Small Customization Platter' || item.name === 'Premium Customization Platter') && '🍽️'}
+                    {item.baseFruit === 'Watermelon' && '🍉'}
+                    {item.baseFruit === 'Orange' && '🍊'}
+                    {item.baseFruit === 'Pineapple' && '🍍'}
+                    {item.baseFruit === 'Strawberry' && '🍓'}
+                    {item.baseFruit === 'Chikoo' && '🥭'}
+                    {item.baseFruit === 'Guava' && '🍈'}
+                    {item.baseFruit === 'Kiwi' && '🥝'}
+                    {item.baseFruit === 'Tender Coconut' && '🥥'}
+                    {!item.baseFruit && !item.name.includes('Customization') && item.name !== 'Mix Fruit Juice' && '🍎'}
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1 text-center text-text font-heading text-balance">
+                    {item.name}
+                  </h3>
+                  {item.description && (
+                    <p className="text-s text-text/70 text-center mb-2 leading-snug">{item.description}</p>
+                  )}
+                  <p className="text-2xl font-bold text-primary text-center">
+                    ₹{item.basePrice}
+                  </p>
+
+                  {item.isAvailable === false ? (
+                    <button
+                      disabled
+                      className="w-full mt-4 bg-gray-200 text-gray-500 py-2 rounded-custom font-semibold cursor-not-allowed border-2 border-gray-300"
+                    >
+                      Unavailable
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleItemClick(item)
+                      }}
+                      className="w-full mt-4 bg-primary text-white py-2 rounded-custom font-semibold hover:bg-primary/90 transition-colors"
+                    >
+                      {item.allowCustomization ? 'Customize & Add' : 'Add to Cart'}
+                    </button>
+                  )}
+                </motion.div>
+              ))}
             </motion.div>
           </AnimatePresence>
         )}

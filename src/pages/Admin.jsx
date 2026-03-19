@@ -196,6 +196,14 @@ const MenuItemForm = ({ item, onSubmit, onCancel, title, setItemState }) => (
         className="p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
       />
     </div>
+    <input
+      type="text"
+      placeholder="Short description (optional, shown on menu)"
+      value={item.description || ''}
+      onChange={(e) => setItemState({ ...item, description: e.target.value })}
+      className="w-full mt-4 p-3 border-2 border-gray-200 rounded-custom focus:border-primary focus:outline-none"
+      maxLength={80}
+    />
     <div className="flex items-center gap-2 mt-4">
       <input
         type="checkbox"
@@ -241,12 +249,18 @@ const Admin = () => {
   const [isOrderingEnabled, setIsOrderingEnabled] = useState(true)
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [toast, setToast] = useState(null)
   const navigate = useNavigate()
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   // Menu management state
   const [showAddItem, setShowAddItem] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
-  const [newItem, setNewItem] = useState({ name: '', basePrice: '', category: 'juice', baseFruit: '', allowCustomization: false })
+  const [newItem, setNewItem] = useState({ name: '', basePrice: '', category: 'juice', baseFruit: '', description: '', allowCustomization: false })
 
   // Fruit management state
   const [showAddFruit, setShowAddFruit] = useState(false)
@@ -404,9 +418,10 @@ const Admin = () => {
         ...newItem,
         basePrice: Number(newItem.basePrice)
       })
-      setNewItem({ name: '', basePrice: '', category: 'juice', baseFruit: '', allowCustomization: false })
+      setNewItem({ name: '', basePrice: '', category: 'juice', baseFruit: '', description: '', allowCustomization: false })
       setShowAddItem(false)
       await loadData()
+      showToast('Menu item added successfully!')
     } catch (error) {
       alert('Failed to add item: ' + error.message)
     }
@@ -420,10 +435,12 @@ const Admin = () => {
         basePrice: Number(editingItem.basePrice),
         category: editingItem.category,
         baseFruit: editingItem.baseFruit,
+        description: editingItem.description || '',
         allowCustomization: editingItem.allowCustomization
       })
       setEditingItem(null)
       await loadData()
+      showToast('Item saved successfully!')
     } catch (error) {
       alert('Failed to update item: ' + error.message)
     }
@@ -567,6 +584,21 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-white border border-green-200 shadow-lg rounded-custom px-5 py-3"
+          >
+            <span className="text-green-500 text-xl">✓</span>
+            <p className="text-text font-semibold text-sm">{toast.message}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile Overlay */}
       <AnimatePresence>
         {sidebarOpen && (

@@ -89,7 +89,7 @@ router.get('/plates', async (req, res) => {
 // Add new menu item
 router.post('/', async (req, res) => {
   try {
-    const { name, basePrice, category, baseFruit, allowCustomization } = req.body
+    const { name, basePrice, category, baseFruit, allowCustomization, description } = req.body
     
     // Auto-generate next ID
     const lastItem = await MenuItem.findOne().sort({ id: -1 })
@@ -102,6 +102,7 @@ router.post('/', async (req, res) => {
       category,
       baseFruit: baseFruit || null,
       allowCustomization: allowCustomization || false,
+      description: description || '',
       isAvailable: true
     })
 
@@ -115,10 +116,10 @@ router.post('/', async (req, res) => {
 // Update menu item
 router.put('/:id', async (req, res) => {
   try {
-    const { name, basePrice, category, baseFruit, allowCustomization } = req.body
+    const { name, basePrice, category, baseFruit, allowCustomization, description } = req.body
     const item = await MenuItem.findOneAndUpdate(
       { id: parseInt(req.params.id) },
-      { name, basePrice, category, baseFruit, allowCustomization },
+      { name, basePrice, category, baseFruit, allowCustomization, description: description || '' },
       { new: true }
     )
 

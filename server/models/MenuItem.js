@@ -31,6 +31,10 @@ const menuItemSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  description: {
+    type: String,
+    default: ''
+  },
   isBestseller: {
     type: Boolean,
     default: false
