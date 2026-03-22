@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import Admin from './pages/Admin'
 import MyOrders from './pages/MyOrders'
 import { CartProvider } from './context/CartContext'
+import ScrollToTop from './components/ScrollToTop'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/my-orders" element={<MyOrders />} />
       </Routes>
+      <ScrollToTop />
     </CartProvider>
   )
 }
