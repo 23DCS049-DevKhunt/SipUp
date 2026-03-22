@@ -29,13 +29,13 @@ const Footer = () => {
           </div>
           <div>
             <h4 className="text-lg font-semibold mb-4">Contact</h4>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
               <p className="text-white/80">📱 +91 8866006024</p>
               <a href="https://wa.me/918866006024" target="_blank" rel="noopener noreferrer" className="text-green-500 hover:scale-110 transition-transform flex items-center justify-center">
                 <WhatsAppIcon className="w-5 h-5" />
               </a>
             </div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
               <p className="text-white/80">📱 +91 6353865836</p>
               <a href="https://wa.me/916353865836" target="_blank" rel="noopener noreferrer" className="text-green-500 hover:scale-110 transition-transform flex items-center justify-center">
                 <WhatsAppIcon className="w-5 h-5" />
