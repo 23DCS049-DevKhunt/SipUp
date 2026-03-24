@@ -63,7 +63,3 @@ Browser Support
 -------------
 
 Works on all modern browsers (Chrome, Firefox, Safari, Edge)
-
-## Recent Updates
-
-- ✅ Fixed UI: Prevented Scroll To Top button from overlapping the Cart sidebar (z-index adjusted).
