@@ -82,8 +82,12 @@ VITE_API_URL=http://localhost:5000/api
 
 **Backend (`server/.env` in server folder)**
 ```env
+MONGODB_URI="#add your MongoDB connection string"
 PORT=5000
-MONGODB_URI= # Replace with your own secure MongoDB URI
+TELEGRAM_BOT_TOKEN=add your bot token
+TELEGRAM_CHAT_ID=add your chat ID
+UPSTASH_REDIS_REST_TOKEN=add your upstash radis token for IP restrictions feature
+UPSTASH_REDIS_REST_URL=add your upstash radis URL for IP restrictions feature
 ```
 
 ## 📂 Project Structure
@@ -113,6 +117,7 @@ SipUp/
   - Default Username: `admin`
   - Default Password: `sipup123`
   - From here, accept and progress orders through different stages to keep customers updated on delivery.
+  - Admins also get instant message via Telegram bot with brief order details.
 
 ## 🧠 Future Enhancements
 - **Payment Gateway Integration:** Implement Razorpay or Stripe for online payments.
